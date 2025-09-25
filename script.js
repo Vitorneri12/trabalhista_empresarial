@@ -79,54 +79,98 @@ const createMobileMenu = () => {
     });
 };
 
-// Form submission handler
-document.querySelector('.contact-form form').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Form submission handler - Envio para WhatsApp
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.hero-form form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
 
-    // Get form data
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData);
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
 
-    // Simple validation
-    const requiredFields = ['nome', 'email', 'telefone', 'servico'];
-    let isValid = true;
+            // Simple validation
+            const requiredFields = ['nome', 'email', 'telefone', 'servico'];
+            let isValid = true;
 
-    requiredFields.forEach(field => {
-        const input = document.getElementById(field);
-        if (!data[field] || data[field].trim() === '') {
-            input.style.borderColor = '#e74c3c';
-            isValid = false;
-        } else {
-            input.style.borderColor = '#e0e0e0';
-        }
-    });
+            requiredFields.forEach(field => {
+                const input = document.getElementById(field);
+                if (!data[field] || data[field].trim() === '') {
+                    input.style.borderColor = '#e74c3c';
+                    isValid = false;
+                } else {
+                    input.style.borderColor = '#e0e0e0';
+                }
+            });
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const emailInput = document.getElementById('email');
-    if (data.email && !emailRegex.test(data.email)) {
-        emailInput.style.borderColor = '#e74c3c';
-        isValid = false;
-    }
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const emailInput = document.getElementById('email');
+            if (data.email && !emailRegex.test(data.email)) {
+                emailInput.style.borderColor = '#e74c3c';
+                isValid = false;
+            }
 
-    if (isValid) {
-        // Show success message
-        const button = this.querySelector('.btn');
-        const originalText = button.textContent;
-        button.textContent = 'Enviando...';
-        button.disabled = true;
+            if (isValid) {
+                // Show loading state
+                const button = this.querySelector('.btn');
+                const originalText = button.textContent;
+                button.textContent = 'Enviando...';
+                button.disabled = true;
 
-        // Simulate form submission
-        setTimeout(() => {
-            alert('Mensagem enviada com sucesso! Entraremos em contato em breve.');
-            this.reset();
-            button.textContent = originalText;
-            button.disabled = false;
-        }, 1500);
-    } else {
-        alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+                // Create WhatsApp message
+                const whatsappMessage = createWhatsAppMessage(data);
+
+                // Send to WhatsApp
+                sendToWhatsApp(whatsappMessage);
+
+                // Reset form after a delay
+                setTimeout(() => {
+                    alert('Redirecionando para WhatsApp...');
+                    this.reset();
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 1000);
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios corretamente.');
+            }
+        });
     }
 });
+
+// Function to create WhatsApp message from form data
+function createWhatsAppMessage(data) {
+    let message = `*📋 NOVA SOLICITAÇÃO DE CONSULTA*\n\n`;
+    message += `👤 *Nome:* ${data.nome}\n`;
+    message += `📧 *E-mail:* ${data.email}\n`;
+    message += `📱 *Telefone:* ${data.telefone}\n`;
+
+    if (data.empresa && data.empresa.trim()) {
+        message += `🏢 *Empresa:* ${data.empresa}\n`;
+    }
+
+    message += `⚖️ *Serviço de Interesse:* ${data.servico}\n`;
+
+    if (data.mensagem && data.mensagem.trim()) {
+        message += `💬 *Mensagem:* ${data.mensagem}\n`;
+    }
+
+    message += `\n📅 *Data:* ${new Date().toLocaleDateString('pt-BR')}\n`;
+    message += `🕐 *Horário:* ${new Date().toLocaleTimeString('pt-BR')}`;
+
+    return message;
+}
+
+// Function to send message to WhatsApp
+function sendToWhatsApp(message) {
+    const whatsappNumber = '5519998630306'; // WhatsApp number from the website
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+    // Open WhatsApp in new tab
+    window.open(whatsappURL, '_blank');
+}
 
 // Animate elements on scroll
 const observerOptions = {
